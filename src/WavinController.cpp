@@ -1,10 +1,10 @@
 #include <ESP8266WiFi.h>
-#include "WawinController.h"
+#include "WavinController.h"
 
 
-WawinController::WawinController(uint8_t pin, bool swapSerialPins, uint16_t timeout_ms)
+WavinController::WavinController(uint8_t pin, bool swapSerialPins, uint16_t timeout_ms)
 {
-  txEnablePin = pin;  
+  txEnablePin = pin;
   digitalWrite(pin, LOW);
   pinMode(pin, OUTPUT);
 
@@ -19,7 +19,7 @@ WawinController::WawinController(uint8_t pin, bool swapSerialPins, uint16_t time
 }
 
 
-unsigned int WawinController::calculateCRC(uint8_t *frame, uint8_t bufferSize)
+unsigned int WavinController::calculateCRC(uint8_t *frame, uint8_t bufferSize)
 {
   uint16_t temp = 0xFFFF;
   bool flag;
@@ -42,7 +42,7 @@ unsigned int WawinController::calculateCRC(uint8_t *frame, uint8_t bufferSize)
 }
 
 
-bool WawinController::recieve(uint16_t *reply, uint8_t cmdtype)
+bool WavinController::recieve(uint16_t *reply, uint8_t cmdtype)
 {
   uint8_t buffer[RECIEVE_BUFFER_SIZE];
   uint8_t n = 0;
@@ -55,7 +55,7 @@ bool WawinController::recieve(uint16_t *reply, uint8_t cmdtype)
       buffer[n] = Serial.read();
       n++;
 
-      if (n > 5 && 
+      if (n > 5 &&
         buffer[0] == MODBUS_DEVICE &&
         buffer[1] == cmdtype &&
         buffer[2] + 5 == n)
@@ -63,7 +63,7 @@ bool WawinController::recieve(uint16_t *reply, uint8_t cmdtype)
         // Complete package
         uint16_t crc = calculateCRC(buffer, n);
         if (crc != 0) return false;
-      
+
         // CRC ok, copy to reply buffer
         for (int j = 0; j < buffer[2] / 2; j++)
         {
@@ -77,7 +77,7 @@ bool WawinController::recieve(uint16_t *reply, uint8_t cmdtype)
 }
 
 
-void WawinController::transmit(uint8_t *data, uint8_t lenght)
+void WavinController::transmit(uint8_t *data, uint8_t lenght)
 {
   // Empty recieve buffer before sending
   while (Serial.read() != -1);
@@ -93,7 +93,7 @@ void WawinController::transmit(uint8_t *data, uint8_t lenght)
 }
 
 
-bool WawinController::readRegisters(uint8_t category, uint8_t page, uint8_t index, uint8_t count, uint16_t *reply)
+bool WavinController::readRegisters(uint8_t category, uint8_t page, uint8_t index, uint8_t count, uint16_t *reply)
 {
   uint8_t message[8];
 
@@ -115,7 +115,7 @@ bool WawinController::readRegisters(uint8_t category, uint8_t page, uint8_t inde
 }
 
 
-bool WawinController::writeRegister(uint8_t category, uint8_t page, uint8_t index, uint16_t value)
+bool WavinController::writeRegister(uint8_t category, uint8_t page, uint8_t index, uint16_t value)
 {
   uint8_t message[10];
 

@@ -1,10 +1,10 @@
 #include <inttypes.h>
 
 
-class WawinController
+class WavinController
 {
   public:
-    WawinController(uint8_t pin, bool swapSerialPins, uint16_t timeout_ms);
+    WavinController(uint8_t pin, bool swapSerialPins, uint16_t timeout_ms);
     bool readRegisters(uint8_t category, uint8_t page, uint8_t index, uint8_t count, uint16_t *reply);
     bool writeRegister(uint8_t category, uint8_t page, uint8_t index, uint16_t value);
 
@@ -16,16 +16,16 @@ class WawinController
     static const uint8_t CATEGORY_CLOCK =       0x05;
     static const uint8_t CATEGORY_SCHEDULES =   0x06;
     static const uint8_t CATEGORY_INFO =        0x07;
-      
+
     static const uint8_t ELEMENTS_AIR_TEMPERATURE = 0x04;
     static const uint8_t ELEMENTS_BATTERY_STATUS  = 0x0A;
     static const uint8_t ELEMENTS_SYNC_GROUP      = 0x0B;
-        
+
     static const uint8_t PACKED_DATA_MANUAL_TEMPERATURE = 0x00;
 
     static const uint8_t CHANNELS_TIMER_EVENT = 0x00;
     static const uint8_t CHANNELS_TIMER_EVENT_OUTP_ON_MASK = 0x10;
-        
+
   private:
     uint8_t txEnablePin;
     uint16_t recieveTimeout_ms;

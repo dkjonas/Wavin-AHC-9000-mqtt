@@ -1,11 +1,11 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-#include "WawinController.h"
+#include "WavinController.h"
 
 // Number of thermostats connected to the controller.
 // It is assumed each thermostat controls one output, that all thermostats learned into the controller are used,
 // and that no thermostats has been removed from the controller
-const uint8_t  MAX_ELEMENTS = 5;  
+const uint8_t  MAX_ELEMENTS = 5;
 
 const String   WIFI_SSID = "Enter wireless SSID here";     // wifi ssid
 const String   WIFI_PASS = "Enter wireless password here"; // wifi password
@@ -32,7 +32,7 @@ const String   MQTT_SETPOINT_SET = String(MQTT_PREFIX + "+" + MQTT_SUFFIX_SETPOI
 const uint8_t TX_ENABLE_PIN = 5;
 const bool SWAP_SERIAL_PINS = true;
 const uint16_t RECIEVE_TIMEOUT_MS = 1000;
-WawinController wavinController(TX_ENABLE_PIN, SWAP_SERIAL_PINS, RECIEVE_TIMEOUT_MS);
+WavinController wavinController(TX_ENABLE_PIN, SWAP_SERIAL_PINS, RECIEVE_TIMEOUT_MS);
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -51,7 +51,7 @@ struct lastKnownValue_t {
 const uint16_t LAST_VALUE_UNKNOWN = 0xFFFF;
 
 
-// Read a float value from a non zero terminated array of bytes and 
+// Read a float value from a non zero terminated array of bytes and
 // return 10 times the value as an integer
 uint16_t temperatureFromString(byte* payload, unsigned int length)
 {
@@ -92,13 +92,13 @@ uint8_t getIdFromTopic(char* topic)
 
 
 void mqttCallback(char* topic, byte* payload, unsigned int length)
-{ 
+{
   uint8_t id = getIdFromTopic(topic);
   uint16_t target = temperatureFromString(payload, length);
-  wavinController.writeRegister(WawinController::CATEGORY_PACKED_DATA, id, 0, target);
+  wavinController.writeRegister(WavinController::CATEGORY_PACKED_DATA, id, 0, target);
 
   // Force re-read of registers from controller now
-  lastUpdateTime = 0; 
+  lastUpdateTime = 0;
 }
 
 
@@ -117,7 +117,7 @@ void resetLastSentValues()
 void publishIfNewValue(String topic, String payload, uint16_t newValue, uint16_t *lastSentValue)
 {
   if (newValue != *lastSentValue)
-  {   
+  {
     if (mqttClient.publish(topic.c_str(), payload.c_str(), true))
     {
         *lastSentValue = newValue;
@@ -133,12 +133,12 @@ void publishIfNewValue(String topic, String payload, uint16_t newValue, uint16_t
 void setup()
 {
   mqttClient.setServer(MQTT_SERVER.c_str(), MQTT_PORT);
-  mqttClient.setCallback(mqttCallback);  
+  mqttClient.setCallback(mqttCallback);
 }
 
 
 void loop()
-{  
+{
   if (WiFi.status() != WL_CONNECTED)
   {
     WiFi.mode(WIFI_STA);
@@ -153,7 +153,7 @@ void loop()
     {
       if (mqttClient.connect(MQTT_CLIENT.c_str(), MQTT_USER.c_str(), MQTT_PASS.c_str(), MQTT_WILL.c_str(), 1, true, "False") )
       {
-          mqttClient.subscribe(MQTT_SETPOINT_SET.c_str(), 1);          
+          mqttClient.subscribe(MQTT_SETPOINT_SET.c_str(), 1);
           mqttClient.publish(MQTT_WILL.c_str(), (const uint8_t *)"True", 4, true);
 
           // Forces resending of all parameters to server
@@ -175,42 +175,42 @@ void loop()
         // ELEMENTS are the thermostats. It is assumed that the thermostats are learned into the controller in the
         // first n pages of the elements, which may not be true if thermostats have been removed from the controller.
         // ELEMENTS_SYNC_GROUP is the id of the output the thermostat controls (lowest output if more than one channel is controlled)
-        if (wavinController.readRegisters(WawinController::CATEGORY_ELEMENTS, page, 0, 12, registers))
+        if (wavinController.readRegisters(WavinController::CATEGORY_ELEMENTS, page, 0, 12, registers))
         {
-          uint16_t output = registers[WawinController::ELEMENTS_SYNC_GROUP]; 
-          uint16_t temperature = registers[WawinController::ELEMENTS_AIR_TEMPERATURE];
-          uint16_t battery = registers[WawinController::ELEMENTS_BATTERY_STATUS]; // In 10% steps
+          uint16_t output = registers[WavinController::ELEMENTS_SYNC_GROUP];
+          uint16_t temperature = registers[WavinController::ELEMENTS_AIR_TEMPERATURE];
+          uint16_t battery = registers[WavinController::ELEMENTS_BATTERY_STATUS]; // In 10% steps
 
           String topic = String(MQTT_PREFIX + output + MQTT_SUFFIX_CURRENT);
           String payload = temperatureAsFloatString(temperature);
-                  
+
           publishIfNewValue(topic, payload, temperature, &(lastSentValues[output].temperature));
-          
+
           topic = String(MQTT_PREFIX + output + MQTT_SUFFIX_BATTERY);
           payload = String(battery*10);
-          
-          publishIfNewValue(topic, payload, battery, &(lastSentValues[output].battery));          
+
+          publishIfNewValue(topic, payload, battery, &(lastSentValues[output].battery));
         }
-        
+
         // Read the current setpoint programmed for output
-        if (wavinController.readRegisters(WawinController::CATEGORY_PACKED_DATA, page, WawinController::PACKED_DATA_MANUAL_TEMPERATURE, 1, registers))
-        { 
+        if (wavinController.readRegisters(WavinController::CATEGORY_PACKED_DATA, page, WavinController::PACKED_DATA_MANUAL_TEMPERATURE, 1, registers))
+        {
           uint16_t setpoint = registers[0];
-          
-          String topic = String(MQTT_PREFIX + page + MQTT_SUFFIX_SETPOINT_GET);          
+
+          String topic = String(MQTT_PREFIX + page + MQTT_SUFFIX_SETPOINT_GET);
           String payload = temperatureAsFloatString(setpoint);
 
           publishIfNewValue(topic, payload, setpoint, &(lastSentValues[page].setpoint));
         }
 
         // Read the current status of the output
-        if (wavinController.readRegisters(WawinController::CATEGORY_CHANNELS, page, WawinController::CHANNELS_TIMER_EVENT, 1, registers))
-        { 
+        if (wavinController.readRegisters(WavinController::CATEGORY_CHANNELS, page, WavinController::CHANNELS_TIMER_EVENT, 1, registers))
+        {
           uint16_t status = registers[0];
 
           String topic = String(MQTT_PREFIX + page + MQTT_SUFFIX_OUTPUT);
           String payload;
-          if (status & WawinController::CHANNELS_TIMER_EVENT_OUTP_ON_MASK)
+          if (status & WavinController::CHANNELS_TIMER_EVENT_OUTP_ON_MASK)
             payload = "on";
           else
             payload = "off";
