@@ -6,7 +6,7 @@ The AHC-9000 uses modbus to communicate over half duplex RS422 connection. It ha
 The following schematic shows how to connect an Esp8266 to the AHC-9000:
 ![Schematic](/electronics/schematic.png)
 
-Components:
+Components with links to devices on eBay
 * Esp8266. I use a [NodeMcu 0.9](https://www.ebay.com/itm/NEW-Version-NodeMcu-Lua-ESP8266-CH340-WIFI-Internet-Development-Board-Module/311413475392?epid=502141093&hash=item4881b08840:g:-IEAAOSw-YVXldDM), mostly because it is very convenient to have the onboard USB interface for programming. Almost anything with an Esp8266 on it will work.
 * [24V to 3v3 switchmode converter](https://www.ebay.com/itm/DC-Buck-24V-12V-9V-to-3-3V-3A-Step-Down-Converter-Voltage-Regulator-Power-Module/173494900654?hash=item28651a17ae:g:688AAOSwL1hbgY62). This is only needed if you want to power the Esp8266 from the AHC-9000. A 24V to 5V converter can also be used, if it is connected to the +5V input of the NodeMcu. Please note that not all 3V3 step down converters on eBay supports 24V input
 * [MAX3072E](https://www.maximintegrated.com/en/products/interface/transceivers/MAX3072E.html) for converting the 3V3 serial output from the Esp8266 to RS422. There are many similar IC's from other suppliers, which can also be used. Speed is limited, and cables can be kept short, so this is rather uncritical. Note though, that it should be a 3V3 version. [MAX3485](https://www.ebay.com/itm/5pcs-MAX3485CPA-DIP-DIP-8-MAX3485-3-3V-Powered-Transceiver-new/400985402735?hash=item5d5c97ad6f:g:WS4AAOSwGvhT43se) should be compatible, and can be found on eBay.
@@ -21,10 +21,10 @@ src/main.cpp containts 6 constants, that should be changed to fit your own setup
 `MAX_ELEMENTS` is the number of thermostats connected to the controller. See comment in the code.
 
 ### Compiling
-I use [platformIO](https://platformio.org/) for compiling, uploading, and and maintaining dependencies for my code. If you install platformio in a supported editor, building this project is quite simple. Just open the directory containing platform.ini from this project, and click compile/upload. If you prefer you may be able to use the Arduino tools with the esp8266 additions for compiling, but a few changes may be needed, including downloading dependencies manually.
+I use [PlatformIO](https://platformio.org/) for compiling, uploading, and and maintaining dependencies for my code. If you install PlatformIO in a supported editor, building this project is quite simple. Just open the directory containing `platformio.ini` from this project, and click build/upload. If you prefer you may be able to use the Arduino tools with the esp8266 additions for compiling, but a few changes may be needed, including downloading dependencies manually.
 
 ### Testing
-Assuming you have a working mqtt server setup, you should now be able to control your AHC-9000 using mqtt. If you have the mosquitto mqtt tools installed on your mqtt server, you can execude:
+Assuming you have a working mqtt server setup, you should now be able to control your AHC-9000 using mqtt. If you have the [Mosquitto](https://mosquitto.org/) mqtt tools installed on your mqtt server, you can execude:
 ```
 mosquitto_sub -u username -P password -t heat/floor/# -v
 ```
