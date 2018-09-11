@@ -45,11 +45,17 @@ climate wavinAhc9000:
     current_temperature_topic: "heat/floor/0/current"
     temperature_command_topic: "heat/floor/0/target_set"
     temperature_state_topic: "heat/floor/0/target"
+    availability_topic: "heat/floor/online"
+    payload_available: "True"
+    payload_not_available: "False"
     qos: 0
 
 sensor wavinBattery:
   - platform: mqtt
     state_topic: "heat/floor/0/battery"
+    availability_topic: "heat/floor/online"
+    payload_available: "True"
+    payload_not_available: "False"
     name: floor_kitchen_battery
     unit_of_measurement: "%"
     qos: 0
