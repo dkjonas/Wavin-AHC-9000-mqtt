@@ -58,5 +58,6 @@ sensor wavinBattery:
     payload_not_available: "False"
     name: floor_kitchen_battery
     unit_of_measurement: "%"
+    icon: mdi:battery
     qos: 0
 ```
