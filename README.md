@@ -15,10 +15,9 @@ Components with links to devices on eBay
 ## Software
 
 ### Configuration
-src/main.cpp containts 6 constants, that should be changed to fit your own setup.
+src/main.cpp containts 5 constants, that should be changed to fit your own setup.
 
-`WIFI_SSID`, `WIFI_PASS`, `MQTT_SERVER`, `MQTT_USER`, `MQTT_PASS`, and `MAX_ELEMENTS`.
-`MAX_ELEMENTS` is the number of thermostats connected to the controller. See comment in the code.
+`WIFI_SSID`, `WIFI_PASS`, `MQTT_SERVER`, `MQTT_USER`, and `MQTT_PASS`.
 
 ### Compiling
 I use [PlatformIO](https://platformio.org/) for compiling, uploading, and and maintaining dependencies for my code. If you install PlatformIO in a supported editor, building this project is quite simple. Just open the directory containing `platformio.ini` from this project, and click build/upload. If you prefer you may be able to use the Arduino tools with the esp8266 additions for compiling, but a few changes may be needed, including downloading dependencies manually.
@@ -34,10 +33,10 @@ To change the target temperature for a thermostat, use:
 ```
 mosquitto_pub -u username -P password -t heat/floor/1/target_set -m 20.5
 ```
-where the number 1 in the above command is the thermostat you want to control and 20.5 is the target temperature in degree celcius.
+where the number 1 in the above command is the output you want to control and 20.5 is the target temperature in degree celcius.
 
 ### Integration with HomeAssistant
-If you have a working mqtt setup in [HomeAssistant](https://home-assistant.io/), all you need to do in order to control your heating from HomeAssistant, is to include the following in your `configuration.yaml`. Create an entry for each thermostat you want to control. Replace the number 0 in the topics with the id of the thermostat.
+If you have a working mqtt setup in [HomeAssistant](https://home-assistant.io/), all you need to do in order to control your heating from HomeAssistant, is to include the following in your `configuration.yaml`. Create an entry for each thermostat you want to control. Replace the number 0 in the topics with the id of the output.
 ```
 climate wavinAhc9000:
   - platform: mqtt

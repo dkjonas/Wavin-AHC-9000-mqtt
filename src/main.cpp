@@ -2,11 +2,6 @@
 #include <PubSubClient.h>
 #include "WavinController.h"
 
-// Number of thermostats connected to the controller.
-// It is assumed each thermostat controls one output, that all thermostats learned into the controller are used,
-// and that no thermostats has been removed from the controller
-const uint8_t  MAX_ELEMENTS = 5;
-
 const String   WIFI_SSID = "Enter wireless SSID here";     // wifi ssid
 const String   WIFI_PASS = "Enter wireless password here"; // wifi password
 
@@ -46,10 +41,11 @@ struct lastKnownValue_t {
   unsigned short setpoint;
   unsigned short battery;
   unsigned short status;
-} lastSentValues[MAX_ELEMENTS];
+} lastSentValues[WavinController::NUMBER_OF_CHANNELS];
 
 const uint16_t LAST_VALUE_UNKNOWN = 0xFFFF;
 
+bool configurationPublished[WavinController::NUMBER_OF_CHANNELS];
 
 // Read a float value from a non zero terminated array of bytes and
 // return 10 times the value as an integer
@@ -104,12 +100,14 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
 
 void resetLastSentValues()
 {
-  for(int8_t i=0; i<MAX_ELEMENTS; i++)
+  for(int8_t i=0; i<WavinController::NUMBER_OF_CHANNELS; i++)
   {
     lastSentValues[i].temperature = LAST_VALUE_UNKNOWN;
     lastSentValues[i].setpoint = LAST_VALUE_UNKNOWN;
     lastSentValues[i].battery = LAST_VALUE_UNKNOWN;
     lastSentValues[i].status = LAST_VALUE_UNKNOWN;
+
+    configurationPublished[i] = false;
   }
 }
 
@@ -134,6 +132,14 @@ void setup()
 {
   mqttClient.setServer(MQTT_SERVER.c_str(), MQTT_PORT);
   mqttClient.setCallback(mqttCallback);
+}
+
+
+void publishConfiguration(uint8_t channel)
+{
+  // TODO: publish discovery message for HomeAssistant
+  // https://www.home-assistant.io/docs/mqtt/discovery/
+  configurationPublished[channel] = true;
 }
 
 
@@ -169,53 +175,73 @@ void loop()
     {
       lastUpdateTime = millis();
 
-      uint16_t registers[12];
-      for (uint8_t page = 0; page < MAX_ELEMENTS; page++)
+      uint16_t registers[11];
+
+      for(uint8_t channel = 0; channel < WavinController::NUMBER_OF_CHANNELS; channel++)
       {
-        // ELEMENTS are the thermostats. It is assumed that the thermostats are learned into the controller in the
-        // first n pages of the elements, which may not be true if thermostats have been removed from the controller.
-        // ELEMENTS_SYNC_GROUP is the id of the output the thermostat controls (lowest output if more than one channel is controlled)
-        if (wavinController.readRegisters(WavinController::CATEGORY_ELEMENTS, page, 0, 12, registers))
+        if (wavinController.readRegisters(WavinController::CATEGORY_CHANNELS, channel, WavinController::CHANNELS_PRIMARY_ELEMENT, 1, registers))
         {
-          uint16_t output = registers[WavinController::ELEMENTS_SYNC_GROUP];
-          uint16_t temperature = registers[WavinController::ELEMENTS_AIR_TEMPERATURE];
-          uint16_t battery = registers[WavinController::ELEMENTS_BATTERY_STATUS]; // In 10% steps
+          uint16_t primaryElement = registers[0] & WavinController::CHANNELS_PRIMARY_ELEMENT_ELEMENT_MASK;
+          bool allThermostatsLost = registers[0] & WavinController::CHANNELS_PRIMARY_ELEMENT_ALL_TP_LOST_MASK;
 
-          String topic = String(MQTT_PREFIX + output + MQTT_SUFFIX_CURRENT);
-          String payload = temperatureAsFloatString(temperature);
+          if(primaryElement==0)
+          {
+              // Channel not used
+              continue;
+          }
 
-          publishIfNewValue(topic, payload, temperature, &(lastSentValues[output].temperature));
+          if(!configurationPublished[channel])
+          {
+            publishConfiguration(channel);
+          }
 
-          topic = String(MQTT_PREFIX + output + MQTT_SUFFIX_BATTERY);
-          payload = String(battery*10);
+          // Read the current setpoint programmed for channel
+          if (wavinController.readRegisters(WavinController::CATEGORY_PACKED_DATA, channel, WavinController::PACKED_DATA_MANUAL_TEMPERATURE, 1, registers))
+          {
+            uint16_t setpoint = registers[0];
 
-          publishIfNewValue(topic, payload, battery, &(lastSentValues[output].battery));
-        }
+            String topic = String(MQTT_PREFIX + channel + MQTT_SUFFIX_SETPOINT_GET);
+            String payload = temperatureAsFloatString(setpoint);
 
-        // Read the current setpoint programmed for output
-        if (wavinController.readRegisters(WavinController::CATEGORY_PACKED_DATA, page, WavinController::PACKED_DATA_MANUAL_TEMPERATURE, 1, registers))
-        {
-          uint16_t setpoint = registers[0];
+            publishIfNewValue(topic, payload, setpoint, &(lastSentValues[channel].setpoint));
+          }
 
-          String topic = String(MQTT_PREFIX + page + MQTT_SUFFIX_SETPOINT_GET);
-          String payload = temperatureAsFloatString(setpoint);
+          // Read the current status of the output for channel
+          if (wavinController.readRegisters(WavinController::CATEGORY_CHANNELS, channel, WavinController::CHANNELS_TIMER_EVENT, 1, registers))
+          {
+            uint16_t status = registers[0];
 
-          publishIfNewValue(topic, payload, setpoint, &(lastSentValues[page].setpoint));
-        }
+            String topic = String(MQTT_PREFIX + channel + MQTT_SUFFIX_OUTPUT);
+            String payload;
+            if (status & WavinController::CHANNELS_TIMER_EVENT_OUTP_ON_MASK)
+              payload = "on";
+            else
+              payload = "off";
 
-        // Read the current status of the output
-        if (wavinController.readRegisters(WavinController::CATEGORY_CHANNELS, page, WavinController::CHANNELS_TIMER_EVENT, 1, registers))
-        {
-          uint16_t status = registers[0];
+            publishIfNewValue(topic, payload, status, &(lastSentValues[channel].status));
+          }
 
-          String topic = String(MQTT_PREFIX + page + MQTT_SUFFIX_OUTPUT);
-          String payload;
-          if (status & WavinController::CHANNELS_TIMER_EVENT_OUTP_ON_MASK)
-            payload = "on";
-          else
-            payload = "off";
+          // If a thermostat for the channel is connected to the controller
+          if(!allThermostatsLost)
+          {
+            // Read values from the primary thermostat connected to this channel 
+            // Primary element from controller is returned as index+1, so 1 i subtracted here to read the correct element
+            if (wavinController.readRegisters(WavinController::CATEGORY_ELEMENTS, primaryElement-1, 0, 11, registers))
+            {
+              uint16_t temperature = registers[WavinController::ELEMENTS_AIR_TEMPERATURE];
+              uint16_t battery = registers[WavinController::ELEMENTS_BATTERY_STATUS]; // In 10% steps
 
-          publishIfNewValue(topic, payload, status, &(lastSentValues[page].status));
+              String topic = String(MQTT_PREFIX + channel + MQTT_SUFFIX_CURRENT);
+              String payload = temperatureAsFloatString(temperature);
+
+              publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].temperature));
+
+              topic = String(MQTT_PREFIX + channel + MQTT_SUFFIX_BATTERY);
+              payload = String(battery*10);
+
+              publishIfNewValue(topic, payload, battery, &(lastSentValues[channel].battery));
+            }
+          }
         }
       }
     }
