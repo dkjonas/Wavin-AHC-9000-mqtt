@@ -25,34 +25,34 @@ I use [PlatformIO](https://platformio.org/) for compiling, uploading, and and ma
 ### Testing
 Assuming you have a working mqtt server setup, you should now be able to control your AHC-9000 using mqtt. If you have the [Mosquitto](https://mosquitto.org/) mqtt tools installed on your mqtt server, you can execude:
 ```
-mosquitto_sub -u username -P password -t heat/floor/# -v
+mosquitto_sub -u username -P password -t heat/# -v
 ```
 to see all live updated parameters from the controller.
 
 To change the target temperature for a thermostat, use:
 ```
-mosquitto_pub -u username -P password -t heat/floor/1/target_set -m 20.5
+mosquitto_pub -u username -P password -t heat/floorXXXXXXXXXXXX/1/target_set -m 20.5
 ```
-where the number 1 in the above command is the output you want to control and 20.5 is the target temperature in degree celcius.
+where the number 1 in the above command is the output you want to control and 20.5 is the target temperature in degree celcius. XXXXXXXXXXXX is the MAC address of the Esp8266, so it will be unique for your setup.
 
 ### Integration with HomeAssistant
-If you have a working mqtt setup in [HomeAssistant](https://home-assistant.io/), all you need to do in order to control your heating from HomeAssistant, is to include the following in your `configuration.yaml`. Create an entry for each thermostat you want to control. Replace the number 0 in the topics with the id of the output.
+If you have a working mqtt setup in [HomeAssistant](https://home-assistant.io/), all you need to do in order to control your heating from HomeAssistant, is to include the following in your `configuration.yaml`. Create an entry for each thermostat you want to control. Replace the number 0 in the topics with the id of the output and XXXXXXXXXXXX with the MAC of the Esp8266 (can be determined with the mosquitto_sub command shown above)
 ```
 climate wavinAhc9000:
   - platform: mqtt
     name: floor_kitchen
-    current_temperature_topic: "heat/floor/0/current"
-    temperature_command_topic: "heat/floor/0/target_set"
-    temperature_state_topic: "heat/floor/0/target"
-    availability_topic: "heat/floor/online"
+    current_temperature_topic: "heat/floorXXXXXXXXXXXX/0/current"
+    temperature_command_topic: "heat/floorXXXXXXXXXXXX/0/target_set"
+    temperature_state_topic: "heat/floorXXXXXXXXXXXX/0/target"
+    availability_topic: "heat/floorXXXXXXXXXXXX/online"
     payload_available: "True"
     payload_not_available: "False"
     qos: 0
 
 sensor wavinBattery:
   - platform: mqtt
-    state_topic: "heat/floor/0/battery"
-    availability_topic: "heat/floor/online"
+    state_topic: "heat/floorXXXXXXXXXXXX/0/battery"
+    availability_topic: "heat/floorXXXXXXXXXXXX/online"
     payload_available: "True"
     payload_not_available: "False"
     name: floor_kitchen_battery

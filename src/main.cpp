@@ -5,15 +5,16 @@
 const String   WIFI_SSID = "Enter wireless SSID here";     // wifi ssid
 const String   WIFI_PASS = "Enter wireless password here"; // wifi password
 
-const String   MQTT_CLIENT = "WAVIN_AC-116";                 // mqtt client_id must be unique for each device connecting to a server
+const String   MQTT_CLIENT = "Wavin-AHC-9000-mqtt";          // mqtt client_id prefix. Will be suffixed with Esp8266 mac to make it unique
 const String   MQTT_SERVER = "Enter IP of mqtt server here"; // mqtt server
 const uint16_t MQTT_PORT   = 1883;                           // mqtt port
 const String   MQTT_USER   = "Enter mqtt username here";     // mqtt user
 const String   MQTT_PASS   = "Enter mqtt password here";     // mqtt password
 
-
-// Mqtt defines. Default is topics like 'heat/floor/3/target', where 3 is the thermostat id
-const String   MQTT_PREFIX              = "heat/floor/"; // include tailing '/' in prefix
+// MQTT defines
+// Esp8266 MAC will be added to the prefix, to ensure unique topics
+// Default is topics like 'heat/floorXXXXXXXXXXXX/3/target', where 3 is the output id and XXXXXXXXXXXX is the mac
+const String   MQTT_PREFIX              = "heat/floor";  // do not include tailing '/' in prefix
 const String   MQTT_ONLINE              = "online";      
 const String   MQTT_SUFFIX_CURRENT      = "/current";    // include heading '/' in all suffixes
 const String   MQTT_SUFFIX_SETPOINT_GET = "/target";
@@ -21,8 +22,8 @@ const String   MQTT_SUFFIX_SETPOINT_SET = "/target_set";
 const String   MQTT_SUFFIX_BATTERY      = "/battery";
 const String   MQTT_SUFFIX_OUTPUT       = "/output";
 
-const String   MQTT_WILL = String(MQTT_PREFIX + MQTT_ONLINE);
-const String   MQTT_SETPOINT_SET = String(MQTT_PREFIX + "+" + MQTT_SUFFIX_SETPOINT_SET);
+String mqttPrefixWithMac;
+String mqttClientWithMac;
 
 const uint8_t TX_ENABLE_PIN = 5;
 const bool SWAP_SERIAL_PINS = true;
@@ -73,7 +74,7 @@ String temperatureAsFloatString(uint16_t temperature)
 
 uint8_t getIdFromTopic(char* topic)
 {
-  unsigned int startIndex = MQTT_PREFIX.length();
+  unsigned int startIndex = mqttPrefixWithMac.length();
   int i = 0;
   uint8_t result = 0;
 
@@ -130,6 +131,14 @@ void publishIfNewValue(String topic, String payload, uint16_t newValue, uint16_t
 
 void setup()
 {
+  uint8_t mac[6];
+  WiFi.macAddress(mac);
+  char macStr[13] = {0};
+  sprintf(macStr, "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+  mqttPrefixWithMac = String(MQTT_PREFIX + macStr + "/");
+  mqttClientWithMac = String(MQTT_CLIENT + macStr);
+
   mqttClient.setServer(MQTT_SERVER.c_str(), MQTT_PORT);
   mqttClient.setCallback(mqttCallback);
 }
@@ -157,10 +166,12 @@ void loop()
   {
     if (!mqttClient.connected())
     {
-      if (mqttClient.connect(MQTT_CLIENT.c_str(), MQTT_USER.c_str(), MQTT_PASS.c_str(), MQTT_WILL.c_str(), 1, true, "False") )
+      String will = String(mqttPrefixWithMac + MQTT_ONLINE);
+      if (mqttClient.connect(mqttClientWithMac.c_str(), MQTT_USER.c_str(), MQTT_PASS.c_str(), will.c_str(), 1, true, "False") )
       {
-          mqttClient.subscribe(MQTT_SETPOINT_SET.c_str(), 1);
-          mqttClient.publish(MQTT_WILL.c_str(), (const uint8_t *)"True", 4, true);
+          String setpointSetTopic = String(mqttPrefixWithMac + "+" + MQTT_SUFFIX_SETPOINT_SET);
+          mqttClient.subscribe(setpointSetTopic.c_str(), 1);
+          mqttClient.publish(will.c_str(), (const uint8_t *)"True", 4, true);
 
           // Forces resending of all parameters to server
           resetLastSentValues();
@@ -200,7 +211,7 @@ void loop()
           {
             uint16_t setpoint = registers[0];
 
-            String topic = String(MQTT_PREFIX + channel + MQTT_SUFFIX_SETPOINT_GET);
+            String topic = String(mqttPrefixWithMac + channel + MQTT_SUFFIX_SETPOINT_GET);
             String payload = temperatureAsFloatString(setpoint);
 
             publishIfNewValue(topic, payload, setpoint, &(lastSentValues[channel].setpoint));
@@ -211,7 +222,7 @@ void loop()
           {
             uint16_t status = registers[0];
 
-            String topic = String(MQTT_PREFIX + channel + MQTT_SUFFIX_OUTPUT);
+            String topic = String(mqttPrefixWithMac + channel + MQTT_SUFFIX_OUTPUT);
             String payload;
             if (status & WavinController::CHANNELS_TIMER_EVENT_OUTP_ON_MASK)
               payload = "on";
@@ -231,12 +242,12 @@ void loop()
               uint16_t temperature = registers[WavinController::ELEMENTS_AIR_TEMPERATURE];
               uint16_t battery = registers[WavinController::ELEMENTS_BATTERY_STATUS]; // In 10% steps
 
-              String topic = String(MQTT_PREFIX + channel + MQTT_SUFFIX_CURRENT);
+              String topic = String(mqttPrefixWithMac + channel + MQTT_SUFFIX_CURRENT);
               String payload = temperatureAsFloatString(temperature);
 
               publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].temperature));
 
-              topic = String(MQTT_PREFIX + channel + MQTT_SUFFIX_BATTERY);
+              topic = String(mqttPrefixWithMac + channel + MQTT_SUFFIX_BATTERY);
               payload = String(battery*10);
 
               publishIfNewValue(topic, payload, battery, &(lastSentValues[channel].battery));
