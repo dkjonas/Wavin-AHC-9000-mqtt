@@ -36,7 +36,15 @@ mosquitto_pub -u username -P password -t heat/floorXXXXXXXXXXXX/1/target_set -m 
 where the number 1 in the above command is the output you want to control and 20.5 is the target temperature in degree celcius. XXXXXXXXXXXX is the MAC address of the Esp8266, so it will be unique for your setup.
 
 ### Integration with HomeAssistant
-If you have a working mqtt setup in [HomeAssistant](https://home-assistant.io/), all you need to do in order to control your heating from HomeAssistant, is to include the following in your `configuration.yaml`. Create an entry for each thermostat you want to control. Replace the number 0 in the topics with the id of the output and XXXXXXXXXXXX with the MAC of the Esp8266 (can be determined with the mosquitto_sub command shown above)
+If you have a working mqtt setup in [HomeAssistant](https://home-assistant.io/), all you need to do in order to control your heating from HomeAssistant is to enable auto discovery for mqtt in your `configuration.yaml`.
+```
+mqtt:
+  discovery: true
+  discovery_prefix: homeassistant
+```
+You will then get a climate and a battery sensor device for each configured outputs on the controller.
+
+If you don't like auto discovery, you can add the entries manually. Create an entry for each output you want to control. Replace the number 0 in the topics with the id of the output and XXXXXXXXXXXX with the MAC of the Esp8266 (can be determined with the mosquitto_sub command shown above)
 ```
 climate wavinAhc9000:
   - platform: mqtt
