@@ -42,7 +42,7 @@ mqtt:
   discovery: true
   discovery_prefix: homeassistant
 ```
-You will then get a climate and a battery sensor device for each configured outputs on the controller.
+You will then get a climate and a battery sensor device for each configured output on the controller.
 
 If you don't like auto discovery, you can add the entries manually. Create an entry for each output you want to control. Replace the number 0 in the topics with the id of the output and XXXXXXXXXXXX with the MAC of the Esp8266 (can be determined with the mosquitto_sub command shown above)
 ```
