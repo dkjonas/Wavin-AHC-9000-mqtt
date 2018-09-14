@@ -1,15 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include "WavinController.h"
-
-const String   WIFI_SSID = "Enter wireless SSID here";     // wifi ssid
-const String   WIFI_PASS = "Enter wireless password here"; // wifi password
-
-const String   MQTT_CLIENT = "Wavin-AHC-9000-mqtt";          // mqtt client_id prefix. Will be suffixed with Esp8266 mac to make it unique
-const String   MQTT_SERVER = "Enter IP of mqtt server here"; // mqtt server
-const uint16_t MQTT_PORT   = 1883;                           // mqtt port
-const String   MQTT_USER   = "Enter mqtt username here";     // mqtt user
-const String   MQTT_PASS   = "Enter mqtt password here";     // mqtt password
+#include "PrivateConfig.h"
 
 // MQTT defines
 // Esp8266 MAC will be added to the device name, to ensure unique topics
@@ -22,6 +14,9 @@ const String   MQTT_SUFFIX_SETPOINT_GET = "/target";
 const String   MQTT_SUFFIX_SETPOINT_SET = "/target_set";
 const String   MQTT_SUFFIX_BATTERY      = "/battery";
 const String   MQTT_SUFFIX_OUTPUT       = "/output";
+
+const String   MQTT_CLIENT = "Wavin-AHC-9000-mqtt";       // mqtt client_id prefix. Will be suffixed with Esp8266 mac to make it unique
+const uint16_t MQTT_PORT   = 1883;                        // mqtt port
 
 String mqttDeviceNameWithMac;
 String mqttClientWithMac;
