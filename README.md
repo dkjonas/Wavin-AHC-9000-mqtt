@@ -2,7 +2,7 @@
 This is a simple Esp8266 mqtt interface for Wavin AHC-9000/Jablotron AC-116, with the goal of being able to control this heating controller from a home automation system.
 
 ## Hardware
-The AHC-9000 uses modbus to communicate over half duplex RS422 connection. It has two RJ45 connectors for this purpose, which can both be used. 
+The AHC-9000 uses modbus to communicate over a half duplex RS422 connection. It has two RJ45 connectors for this purpose, which can both be used. 
 The following schematic shows how to connect an Esp8266 to the AHC-9000:
 ![Schematic](/electronics/schematic.png)
 
@@ -29,7 +29,7 @@ mosquitto_sub -u username -P password -t heat/# -v
 ```
 to see all live updated parameters from the controller.
 
-To change the target temperature for a thermostat, use:
+To change the target temperature for a output, use:
 ```
 mosquitto_pub -u username -P password -t heat/floorXXXXXXXXXXXX/1/target_set -m 20.5
 ```

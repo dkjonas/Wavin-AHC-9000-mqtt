@@ -159,12 +159,9 @@ void publishConfiguration(uint8_t channel)
     "\"qos\": \"0\"}"
   );
 
-  mqttClient.publish(climateTopic.c_str(), climateMessage.c_str(), true);
-  mqttClient.loop(); // Large message. Send to empty buffer
-
+  mqttClient.publish(climateTopic.c_str(), climateMessage.c_str(), true);  
   mqttClient.publish(batteryTopic.c_str(), batteryMessage.c_str(), true);
-  mqttClient.loop(); // Large message. Send to empty buffer
-
+  
   configurationPublished[channel] = true;
 }
 
@@ -214,6 +211,8 @@ void loop()
           return;
       }
     }
+
+    mqttClient.loop(); // Process incomming messages
 
     if (lastUpdateTime + POLL_TIME_MS < millis())
     {
@@ -285,9 +284,7 @@ void loop()
 
               publishIfNewValue(topic, payload, battery, &(lastSentValues[channel].battery));
             }
-          }
-
-          mqttClient.loop(); // Send messages to empty buffer
+          }         
         }
       }
     }
