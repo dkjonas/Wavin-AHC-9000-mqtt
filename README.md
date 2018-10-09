@@ -15,7 +15,7 @@ Components with links to devices on eBay
 ## Software
 
 ### Configuration
-src/PrivateConfig.h containts 5 constants, that should be changed to fit your own setup.
+src/PrivateConfig.h contains 5 constants, that should be changed to fit your own setup.
 
 `WIFI_SSID`, `WIFI_PASS`, `MQTT_SERVER`, `MQTT_USER`, and `MQTT_PASS`.
 
