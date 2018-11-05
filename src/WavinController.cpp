@@ -125,7 +125,7 @@ bool WavinController::writeRegister(uint8_t category, uint8_t page, uint8_t inde
   message[3] = index;
   message[4] = page;
   message[5] = 1;
-  message[6] = value << 8;
+  message[6] = value >> 8;
   message[7] = value & 0xFF;
 
   uint16_t crc = calculateCRC(message, 8);
@@ -138,3 +138,4 @@ bool WavinController::writeRegister(uint8_t category, uint8_t page, uint8_t inde
   uint16_t reply[1];
   return recieve(reply, MODBUS_WRITE_REGISTER); // Recieve reply but ignore it. Asume it's ok
 }
+
