@@ -139,3 +139,28 @@ bool WavinController::writeRegister(uint8_t category, uint8_t page, uint8_t inde
   return recieve(reply, MODBUS_WRITE_REGISTER); // Recieve reply but ignore it. Asume it's ok
 }
 
+bool WavinController::writeMaskedRegister(uint8_t category, uint8_t page, uint8_t index, uint16_t value, uint16_t mask)
+{
+  uint8_t message[12];
+
+  message[0] = MODBUS_DEVICE;
+  message[1] = MODBUS_WRITE_MASKED_REGISTER;
+  message[2] = category;
+  message[3] = index;
+  message[4] = page;
+  message[5] = 1;
+  message[6] = value >> 8;
+  message[7] = value & 0xFF;
+  message[8] = mask >> 8;
+  message[9] = mask & 0xFF;
+
+  uint16_t crc = calculateCRC(message, 10);
+
+  message[10] = crc & 0xFF;
+  message[11] = crc >> 8;
+
+  transmit(message, 12);
+
+  uint16_t reply[1];
+  return recieve(reply, MODBUS_WRITE_MASKED_REGISTER); // Recieve reply but ignore it. Asume it's ok
+}
