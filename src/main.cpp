@@ -254,8 +254,12 @@ void loop()
           return;
       }
     }
-
-    mqttClient.loop(); // Process incomming messages
+  
+    // Process incomming messages and maintain connection to the server
+    if(!mqttClient.loop())
+    {
+        return;
+    }
 
     if (lastUpdateTime + POLL_TIME_MS < millis())
     {
@@ -346,6 +350,12 @@ void loop()
               publishIfNewValue(topic, payload, battery, &(lastSentValues[channel].battery));
             }
           }         
+        }
+
+        // Process incomming messages and maintain connection to the server
+        if(!mqttClient.loop())
+        {
+            return;
         }
       }
     }
