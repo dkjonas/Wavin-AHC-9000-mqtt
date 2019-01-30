@@ -53,6 +53,11 @@ climate wavinAhc9000:
     current_temperature_topic: "heat/floorXXXXXXXXXXXX/0/current"
     temperature_command_topic: "heat/floorXXXXXXXXXXXX/0/target_set"
     temperature_state_topic: "heat/floorXXXXXXXXXXXX/0/target"
+    mode_command_topic: "heat/floorXXXXXXXXXXXX/0/mode_set"
+    mode_state_topic: "heat/floorXXXXXXXXXXXX/0/mode"
+    modes:
+      - "heat"
+      - "off"
     availability_topic: "heat/floorXXXXXXXXXXXX/online"
     payload_available: "True"
     payload_not_available: "False"
