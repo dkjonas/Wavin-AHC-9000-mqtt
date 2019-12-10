@@ -6,3 +6,4 @@ const String   WIFI_PASS = "Enter wireless password here";     // wifi password
 const String   MQTT_SERVER = "Enter mqtt server address here"; // mqtt server address without port number
 const String   MQTT_USER   = "Enter mqtt username here";       // mqtt user. Use "" for no username
 const String   MQTT_PASS   = "Enter mqtt password here";       // mqtt password. Use "" for no password
+const uint16_t MQTT_PORT   = 1883;                             // mqtt port
