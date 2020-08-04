@@ -12,6 +12,8 @@ Components with links to devices on eBay
 * [MAX3072E](https://www.maximintegrated.com/en/products/interface/transceivers/MAX3072E.html) for converting the 3V3 serial output from the Esp8266 to RS422. There are many similar IC's from other suppliers, which can also be used. Speed is limited, and cables can be kept short, so this is rather uncritical. Note though, that it should be a 3V3 version. [MAX3485](https://www.ebay.com/itm/5pcs-MAX3485CPA-DIP-DIP-8-MAX3485-3-3V-Powered-Transceiver-new/400985402735?hash=item5d5c97ad6f:g:WS4AAOSwGvhT43se) should be compatible, and can be found on eBay.
 * RJ45 connector. This can be omitted by soldering a patch cable directly to the circuit.
 
+Depending on the used Esp8266 board and/or the switchmode converter used, it may be benificial to add a larger capacitor in the range of 100uF between 3V3 and gnd.  This will most likely help if you experience WiFi connection/stability issues.
+
 ## Software
 
 ### Configuration
