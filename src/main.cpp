@@ -173,6 +173,7 @@ void publishConfiguration(uint8_t channel)
   String climateTopic = String("homeassistant/climate/" + mqttDeviceNameWithMac + "/" + channel + "/config");
   String climateMessage = String(
     "{\"name\": \"" +mqttDeviceNameWithMac + "_" + channel +  "_climate\", "
+    "\"action_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_OUTPUT + "\", " 
     "\"current_temperature_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_CURRENT + "\", " 
     "\"temperature_command_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_SETPOINT_SET + "\", " 
     "\"temperature_state_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_SETPOINT_GET + "\", " 
@@ -321,7 +322,7 @@ void loop()
             String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_OUTPUT);
             String payload;
             if (status & WavinController::CHANNELS_TIMER_EVENT_OUTP_ON_MASK)
-              payload = "on";
+              payload = "heating";
             else
               payload = "off";
 
