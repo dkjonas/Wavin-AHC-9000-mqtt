@@ -183,6 +183,9 @@ void publishConfiguration(uint8_t channel)
     "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
     "\"payload_available\": \"True\", "
     "\"payload_not_available\": \"False\", "
+    "\"min_temp\": \"" + String(MIN_TEMP, 1) + "\", "
+    "\"max_temp\": \"" + String(MAX_TEMP, 1) + "\", "
+    "\"temp_step\": \"" + String(TEMP_STEP, 1) + "\", "
     "\"qos\": \"0\"}"
   );
   
