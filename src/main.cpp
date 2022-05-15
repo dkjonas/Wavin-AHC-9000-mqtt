@@ -168,7 +168,7 @@ void publishIfNewValue(String topic, String payload, uint16_t newValue, uint16_t
 
 // Publish discovery messages for HomeAssistant
 // See https://www.home-assistant.io/docs/mqtt/discovery/
-void publishConfiguration(uint8_t channel)
+void publishConfiguration(uint8_t channel, String deviceSwVersion)
 {
   String climateTopic = String("homeassistant/climate/" + mqttDeviceNameWithMac + "/" + channel + "/config");
   String climateMessage = String(
@@ -187,6 +187,15 @@ void publishConfiguration(uint8_t channel)
     "\"min_temp\": \"" + String(MIN_TEMP, 1) + "\", "
     "\"max_temp\": \"" + String(MAX_TEMP, 1) + "\", "
     "\"temp_step\": \"" + String(TEMP_STEP, 1) + "\", "
+    "\"device\": {"
+      "\"manufacturer\": \"Wavin\", "
+      "\"model\": \"AHC 9000\", "
+      "\"sw_version\": \"" + deviceSwVersion + "\", "
+      "\"name\": \"" + mqttDeviceNameWithMac + "\", "
+      "\"identifiers\": [\"" + mqttDeviceNameWithMac + "\"]"
+    "},"
+    "\"entity_category\": \"config\", "
+    "\"icon\": \"mdi:home-thermometer\", "
     "\"qos\": \"0\"}"
   );
   
@@ -200,6 +209,14 @@ void publishConfiguration(uint8_t channel)
     "\"payload_not_available\": \"False\", "
     "\"device_class\": \"battery\", "
     "\"unit_of_measurement\": \"%\", "
+    "\"device\": {"
+      "\"manufacturer\": \"Wavin\", "
+      "\"model\": \"AHC 9000\", "
+      "\"sw_version\": \"" + deviceSwVersion + "\", "
+      "\"name\": \"" + mqttDeviceNameWithMac + "\", "
+      "\"identifiers\": [\"" + mqttDeviceNameWithMac + "\"]"
+    "},"
+    "\"entity_category\": \"diagnostic\", "
     "\"qos\": \"0\"}"
   );
 
@@ -218,8 +235,8 @@ void setup()
   char macStr[13] = {0};
   sprintf(macStr, "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-  mqttDeviceNameWithMac = String(MQTT_DEVICE_NAME + macStr);
-  mqttClientWithMac = String(MQTT_CLIENT + macStr);
+  mqttDeviceNameWithMac = String(MQTT_DEVICE_NAME + "_" + macStr);
+  mqttClientWithMac = String(MQTT_CLIENT + "_" + macStr);
 
   mqttClient.setServer(MQTT_SERVER.c_str(), MQTT_PORT);
   mqttClient.setCallback(mqttCallback);
@@ -287,9 +304,26 @@ void loop()
 
           if(!configurationPublished[channel])
           {
+            String hwVersion = "unknown";
+            String swVersion = "unknown";
+
+            if (wavinController.readRegisters(WavinController::CATEGORY_INFO, 0, WavinController::INFO_HW_VERSION, 1, registers))
+            {
+              hwVersion = "MC110" + String(registers[0] & WavinController::INFO_HW_VERSION_MASK);
+            }
+
+            if (wavinController.readRegisters(WavinController::CATEGORY_INFO, channel, WavinController::INFO_SW_VERSION, 1, registers))
+            {
+              swVersion = "MC610" + String((registers[0] >> 4) & WavinController::INFO_SW_VERSION_MASK);
+              uint8_t betaVersion = registers[0] & WavinController::INFO_SW_BETA_VERSION_MASK;
+              if (betaVersion) {
+                swVersion += "b" + String(betaVersion);
+              }
+            }
+
             uint16_t standbyTemperature = STANDBY_TEMPERATURE_DEG * 10;
             wavinController.writeRegister(WavinController::CATEGORY_PACKED_DATA, channel, WavinController::PACKED_DATA_STANDBY_TEMPERATURE, standbyTemperature);
-            publishConfiguration(channel);
+            publishConfiguration(channel, hwVersion + " / " + swVersion);
           }
 
           // Read the current setpoint programmed for channel

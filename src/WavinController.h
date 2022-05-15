@@ -35,7 +35,13 @@ class WavinController
     static const uint8_t  CHANNELS_PRIMARY_ELEMENT = 0x02;
     static const uint16_t CHANNELS_PRIMARY_ELEMENT_ELEMENT_MASK = 0x003f;
     static const uint16_t CHANNELS_PRIMARY_ELEMENT_ALL_TP_LOST_MASK = 0x0400;
-    
+
+    static const uint8_t  INFO_HW_VERSION = 0x02;
+    static const uint8_t  INFO_HW_VERSION_MASK = 0x7F;
+    static const uint8_t  INFO_SW_VERSION = 0x03;
+    static const uint8_t  INFO_SW_VERSION_MASK = 0xFF;
+    static const uint8_t  INFO_SW_BETA_VERSION_MASK = 0x0F;
+
   private:
     uint8_t txEnablePin;
     uint16_t recieveTimeout_ms;
